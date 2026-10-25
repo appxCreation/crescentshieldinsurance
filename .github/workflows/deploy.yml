@@ -29,7 +29,7 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build web --release --base-href "/cresentshieldinsurance/"
+      - run: flutter build web --release --base-href "/crescentshieldinsurance/"
 
       - uses: actions/upload-pages-artifact@v4
         with:
