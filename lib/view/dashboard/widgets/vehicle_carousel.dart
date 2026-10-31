@@ -1,154 +1,99 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../../constants/colors.dart';
 import 'site_components.dart';
 
 class VehicleCarousel extends StatefulWidget {
-  const VehicleCarousel({super.key, required this.onQuote});
+  const VehicleCarousel({
+    super.key,
+    required this.sectionKey,
+    required this.onQuote,
+  });
 
-  final VoidCallback onQuote;
+  final Key sectionKey;
+  final ValueChanged<String> onQuote;
 
   @override
   State<VehicleCarousel> createState() => _VehicleCarouselState();
 }
 
 class _VehicleCarouselState extends State<VehicleCarousel> {
-  final _controller = PageController();
-  var _page = 0;
-  Timer? _autoAdvance;
+  var _selectedIndex = 0;
 
-  static const _slides = [
-    _VehicleSlide(
-      label: 'Trucks',
-      title: 'Third party protection for your truck',
-      description:
-          'Get the cover you need for your commercial truck, with quick paperwork and a digital policy.',
-      button: 'Get a Truck Quote',
-      icon: Icons.local_shipping_rounded,
-      colors: [Color(0xff0b3d36), Color(0xff0f6b57)],
+  static const _plans = [
+    _VehiclePlan(
+      vehicleType: 'Truck',
+      title: 'Third party · Truck',
+      amount: 'PKR 12,500',
+      description: 'Per year. Final amount confirmed by our team.',
     ),
-    _VehicleSlide(
-      label: 'Trailers',
-      title: 'Trailer cover with support when you need it',
-      description:
-          'Arrange third party insurance for your trailer with a digital policy and claims support at +92 308 6902148.',
-      button: 'Get a Trailer Quote',
-      icon: Icons.rv_hookup_rounded,
-      colors: [Color(0xff102f2a), Color(0xff167b68)],
+    _VehiclePlan(
+      vehicleType: 'Trailer',
+      title: 'Third party · Trailer',
+      amount: 'PKR 12,500',
+      description: 'Per year. Final amount confirmed by our team.',
     ),
   ];
 
   @override
-  void initState() {
-    super.initState();
-    _autoAdvance = Timer.periodic(const Duration(milliseconds: 5500), (_) {
-      if (mounted) _goTo(_page + 1);
-    });
-  }
-
-  @override
-  void dispose() {
-    _autoAdvance?.cancel();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _goTo(int page) {
-    final next = (page + _slides.length) % _slides.length;
-    _controller.animateToPage(
-      next,
-      duration: const Duration(milliseconds: 500),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final mobile = MediaQuery.sizeOf(context).width <= 800;
-    return SiteContainer(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 50),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: SizedBox(
-          height: mobile ? 548 : 370,
-          child: Stack(
-            children: [
-              PageView.builder(
-                controller: _controller,
-                itemCount: _slides.length,
-                onPageChanged: (value) => setState(() => _page = value),
-                itemBuilder: (context, index) => _SlideCard(
-                  slide: _slides[index],
-                  index: index,
-                  mobile: mobile,
-                  onQuote: widget.onQuote,
-                ),
-              ),
-              if (!mobile) ...[
-                Positioned(
-                  left: 14,
-                  top: 0,
-                  bottom: 0,
-                  child: _ArrowButton(
-                    icon: Icons.chevron_left_rounded,
-                    label: 'Previous slide',
-                    onPressed: () => _goTo(_page - 1),
-                  ),
-                ),
-                Positioned(
-                  right: 14,
-                  top: 0,
-                  bottom: 0,
-                  child: _ArrowButton(
-                    icon: Icons.chevron_right_rounded,
-                    label: 'Next slide',
-                    onPressed: () => _goTo(_page + 1),
-                  ),
-                ),
-              ],
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 18,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    for (var i = 0; i < _slides.length; i++)
-                      InkWell(
-                        onTap: () => _goTo(i),
-                        borderRadius: BorderRadius.circular(99),
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 250),
-                          width: i == _page ? 30 : 9,
-                          height: 9,
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          decoration: BoxDecoration(
-                            color: i == _page
-                                ? SitePalette.of(context).gold
-                                : Colors.white.withValues(alpha: .5),
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: LinearProgressIndicator(
-                  value: (_page + 1) / _slides.length,
-                  minHeight: 3,
-                  backgroundColor: Colors.white.withValues(alpha: .14),
-                  valueColor: AlwaysStoppedAnimation(
-                    SitePalette.of(context).gold,
-                  ),
-                ),
+    final mobile = MediaQuery.sizeOf(context).width <= 760;
+    final selectedPlan = _plans[_selectedIndex];
+
+    return Container(
+      key: widget.sectionKey,
+      width: double.infinity,
+      color: const Color(0xff06251c),
+      padding: EdgeInsets.symmetric(vertical: mobile ? 28 : 44),
+      child: SiteContainer(
+        padding: EdgeInsets.symmetric(horizontal: mobile ? 16 : 28),
+        child: Container(
+          padding: EdgeInsets.all(mobile ? 20 : 42),
+          decoration: BoxDecoration(
+            color: const Color(0xff0a2d23),
+            border: Border.all(color: const Color(0xff1c4939)),
+            borderRadius: BorderRadius.circular(mobile ? 28 : 38),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x33000000),
+                blurRadius: 32,
+                offset: Offset(0, 18),
               ),
             ],
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 720;
+              final selector = _VehicleSelector(
+                selectedIndex: _selectedIndex,
+                labels: [for (final plan in _plans) plan.vehicleType],
+                onSelected: (index) => setState(() => _selectedIndex = index),
+              );
+              final quoteCard = _PolicyPreviewCard(
+                plan: selectedPlan,
+                compact: compact,
+                onQuote: () => widget.onQuote(selectedPlan.vehicleType),
+              );
+
+              if (compact) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    selector,
+                    const SizedBox(height: 25),
+                    quoteCard,
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(child: selector),
+                  const SizedBox(width: 44),
+                  Expanded(child: quoteCard),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -156,120 +101,218 @@ class _VehicleCarouselState extends State<VehicleCarousel> {
   }
 }
 
-class _SlideCard extends StatelessWidget {
-  const _SlideCard({
-    required this.slide,
-    required this.index,
-    required this.mobile,
+class _VehicleSelector extends StatelessWidget {
+  const _VehicleSelector({
+    required this.selectedIndex,
+    required this.labels,
+    required this.onSelected,
+  });
+
+  final int selectedIndex;
+  final List<String> labels;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text(
+          'What are you insuring?',
+          style: TextStyle(
+            color: const Color(0xffe4f1ea),
+            fontSize: 30,
+            fontWeight: FontWeight.w600,
+            letterSpacing: -1,
+            height: 1.15,
+          ),
+        ),
+        const SizedBox(height: 22),
+        Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: [
+            for (var index = 0; index < labels.length; index++)
+              _VehicleChoiceButton(
+                label: labels[index],
+                selected: selectedIndex == index,
+                onTap: () => onSelected(index),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _VehicleChoiceButton extends StatelessWidget {
+  const _VehicleChoiceButton({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    selected: selected,
+    label: label,
+    child: Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(17),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xff0b6746) : Colors.transparent,
+            border: Border.all(
+              color: selected
+                  ? const Color(0xff0b6746)
+                  : const Color(0xff24503f),
+              width: 1.5,
+            ),
+            borderRadius: BorderRadius.circular(17),
+            boxShadow: selected
+                ? const [
+                    BoxShadow(
+                      color: Color(0x33000000),
+                      blurRadius: 12,
+                      offset: Offset(0, 5),
+                    ),
+                  ]
+                : const [],
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              color: const Color(0xffe4f1ea),
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _PolicyPreviewCard extends StatelessWidget {
+  const _PolicyPreviewCard({
+    required this.plan,
+    required this.compact,
     required this.onQuote,
   });
 
-  final _VehicleSlide slide;
-  final int index;
-  final bool mobile;
+  final _VehiclePlan plan;
+  final bool compact;
   final VoidCallback onQuote;
 
   @override
   Widget build(BuildContext context) {
-    final copy = Column(
-      crossAxisAlignment: mobile
-          ? CrossAxisAlignment.center
-          : CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 5),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.white.withValues(alpha: .42)),
-            borderRadius: BorderRadius.circular(99),
-          ),
-          child: Text(
-            slide.label,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-          ),
-        ),
-        const SizedBox(height: 13),
-        Text(
-          slide.title,
-          textAlign: mobile ? TextAlign.center : TextAlign.start,
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: mobile ? 27 : 36,
-            fontWeight: FontWeight.w900,
-            height: 1.15,
-          ),
-        ),
-        const SizedBox(height: 10),
-        ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 460),
-          child: Text(
-            slide.description,
-            textAlign: mobile ? TextAlign.center : TextAlign.start,
-            style: TextStyle(
-              color: Colors.white.withValues(alpha: .9),
-              height: 1.55,
-            ),
-          ),
-        ),
-        const SizedBox(height: 18),
-        GoldButton(label: slide.button, onPressed: onQuote),
-      ],
-    );
-
+    final palette = SitePalette.of(context);
     return Container(
+      constraints: BoxConstraints(minHeight: compact ? 300 : 360),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 22 : 34,
+        vertical: compact ? 28 : 38,
+      ),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: slide.colors,
+        gradient: const LinearGradient(
+          colors: [Color(0xff075c3e), Color(0xff173e2e)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(compact ? 28 : 34),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x44000000),
+            blurRadius: 28,
+            offset: Offset(0, 14),
+          ),
+        ],
       ),
       child: Stack(
+        alignment: Alignment.center,
         children: [
           Positioned(
-            right: mobile ? -28 : 22,
-            top: mobile ? -28 : 4,
-            child: Text(
-              '0${index + 1}',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: .08),
-                fontSize: mobile ? 94 : 140,
-                height: 1,
-                fontWeight: FontWeight.w900,
+            top: 0,
+            right: 0,
+            child: IgnorePointer(
+              child: Container(
+                width: 420,
+                height: 220,
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: Alignment.topRight,
+                    radius: 1.1,
+                    colors: [
+                      palette.gold.withValues(alpha: .2),
+                      Colors.transparent,
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              mobile ? 24 : 56,
-              mobile ? 34 : 36,
-              mobile ? 24 : 56,
-              50,
-            ),
-            child: mobile
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      copy,
-                      const SizedBox(height: 16),
-                      _VehicleIllustration(icon: slide.icon, size: 116),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      Expanded(flex: 11, child: copy),
-                      const SizedBox(width: 26),
-                      Expanded(
-                        flex: 9,
-                        child: Center(
-                          child: _VehicleIllustration(
-                            icon: slide.icon,
-                            size: 235,
-                          ),
-                        ),
-                      ),
-                    ],
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: Text(
+                  plan.title,
+                  key: ValueKey(plan.title),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: const Color(0xffe4f1ea),
+                    fontSize: compact ? 20 : 22,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -.3,
                   ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: FittedBox(
+                  key: ValueKey('${plan.title}-amount'),
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    plan.amount,
+                    style: TextStyle(
+                      color: palette.gold,
+                      fontSize: compact ? 36 : 52,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -1.8,
+                      height: 1.05,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: Text(
+                  plan.description,
+                  key: ValueKey('${plan.title}-description'),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: const Color(0xffbdd4c8),
+                    fontSize: compact ? 14 : 16,
+                    height: 1.45,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+              _RequestPolicyButton(onPressed: onQuote, compact: compact),
+            ],
           ),
         ],
       ),
@@ -277,127 +320,69 @@ class _SlideCard extends StatelessWidget {
   }
 }
 
-class _VehicleIllustration extends StatelessWidget {
-  const _VehicleIllustration({required this.icon, required this.size});
+class _RequestPolicyButton extends StatelessWidget {
+  const _RequestPolicyButton({required this.onPressed, required this.compact});
 
-  final IconData icon;
-  final double size;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    width: size,
-    height: size,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: Colors.white.withValues(alpha: .13),
-      border: Border.all(color: Colors.white.withValues(alpha: .22)),
-    ),
-    child: Icon(icon, color: Colors.white, size: size * .55),
-  );
-}
-
-class _ArrowButton extends StatelessWidget {
-  const _ArrowButton({
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  final IconData icon;
-  final String label;
   final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: IconButton.filledTonal(
-      onPressed: onPressed,
-      tooltip: label,
-      style: IconButton.styleFrom(
-        backgroundColor: Colors.white.withValues(alpha: .2),
-        foregroundColor: Colors.white,
-        fixedSize: const Size(44, 44),
-      ),
-      icon: Icon(icon),
-    ),
-  );
-}
-
-class _VehicleSlide {
-  const _VehicleSlide({
-    required this.label,
-    required this.title,
-    required this.description,
-    required this.button,
-    required this.icon,
-    required this.colors,
-  });
-
-  final String label;
-  final String title;
-  final String description;
-  final String button;
-  final IconData icon;
-  final List<Color> colors;
-}
-
-class StatsStrip extends StatelessWidget {
-  const StatsStrip({super.key});
-
-  static const _items = [
-    ('24', 'Hour claim helpline'),
-    ('5', 'Minutes to request a quote'),
-    ('2', 'Vehicle types: truck & trailer'),
-    ('100%', 'Digital paperwork'),
-  ];
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final palette = SitePalette.of(context);
-    final columns = MediaQuery.sizeOf(context).width <= 800 ? 2 : 4;
     return Container(
       decoration: BoxDecoration(
-        color: palette.surface.withValues(alpha: .86),
-        border: Border(bottom: BorderSide(color: palette.line)),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: SiteContainer(
-        child: GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: columns,
-            childAspectRatio: columns == 2 ? 2.25 : 3.4,
-            crossAxisSpacing: 8,
-            mainAxisSpacing: 8,
+        gradient: const LinearGradient(
+          colors: [Color(0xffffcb57), Color(0xfff2b632)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: palette.gold.withValues(alpha: .35),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
-          itemCount: _items.length,
-          itemBuilder: (context, index) => Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ShaderMask(
-                shaderCallback: (bounds) => LinearGradient(
-                  colors: [palette.brand, palette.gold],
-                ).createShader(bounds),
-                child: Text(
-                  _items[index].$1,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 30,
-                    height: 1.1,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                _items[index].$2,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: palette.muted, fontSize: 12),
-              ),
-            ],
+        ],
+      ),
+      child: FilledButton(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          foregroundColor: goldButtonText,
+          elevation: 0,
+          overlayColor: Colors.white.withValues(alpha: .22),
+          surfaceTintColor: Colors.transparent,
+          animationDuration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 17 : 28,
+            vertical: compact ? 14 : 17,
+          ),
+          minimumSize: Size(0, compact ? 52 : 56),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          textStyle: TextStyle(
+            fontFamily: Theme.of(context).textTheme.labelLarge?.fontFamily,
+            fontSize: compact ? 14 : 16,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -.1,
           ),
         ),
+        child: const Text('Request this policy'),
       ),
     );
   }
+}
+
+class _VehiclePlan {
+  const _VehiclePlan({
+    required this.vehicleType,
+    required this.title,
+    required this.amount,
+    required this.description,
+  });
+
+  final String vehicleType;
+  final String title;
+  final String amount;
+  final String description;
 }

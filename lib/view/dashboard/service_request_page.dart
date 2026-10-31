@@ -80,15 +80,15 @@ class _ServiceRequestPageState extends State<ServiceRequestPage> {
       fillColor: palette.background,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: palette.line),
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: palette.line),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: palette.brand, width: 1.5),
       ),
     );
@@ -235,7 +235,7 @@ class _ServiceRequestPageState extends State<ServiceRequestPage> {
                                 color: _feedbackIsError
                                     ? const Color(0xffb5473e)
                                     : palette.brand,
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(14),
                               ),
                               child: Text(
                                 _feedback!,

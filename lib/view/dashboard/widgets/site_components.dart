@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../constants/colors.dart';
@@ -11,7 +13,7 @@ class SiteContainer extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Center(
     child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 1080),
+      constraints: const BoxConstraints(maxWidth: 1360),
       child: Padding(
         padding: padding ?? const EdgeInsets.symmetric(horizontal: 20),
         child: child,
@@ -25,7 +27,7 @@ class SiteSection extends StatelessWidget {
     super.key,
     required this.child,
     this.alternate = false,
-    this.verticalPadding = 70,
+    this.verticalPadding = 88,
   });
 
   final Widget child;
@@ -35,9 +37,14 @@ class SiteSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = SitePalette.of(context);
+    final sectionPadding = MediaQuery.sizeOf(context).width <= 760
+        ? math.min(verticalPadding, 60.0).toDouble()
+        : verticalPadding;
     return Container(
-      color: alternate ? palette.surface.withValues(alpha: .78) : null,
-      padding: EdgeInsets.symmetric(vertical: verticalPadding),
+      color: alternate
+          ? palette.brand.withValues(alpha: .035)
+          : null,
+      padding: EdgeInsets.symmetric(vertical: sectionPadding),
       child: SiteContainer(child: child),
     );
   }
@@ -49,11 +56,13 @@ class SectionHeading extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.bottomSpacing = 32,
+    this.center = false,
   });
 
   final String title;
   final String? subtitle;
   final double bottomSpacing;
+  final bool center;
 
   @override
   Widget build(BuildContext context) {
@@ -61,13 +70,27 @@ class SectionHeading extends StatelessWidget {
     return Padding(
       padding: EdgeInsets.only(bottom: bottomSpacing),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: center
+            ? CrossAxisAlignment.center
+            : CrossAxisAlignment.start,
         children: [
+          Container(
+            width: 40,
+            height: 5,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [palette.gold, palette.brand],
+              ),
+              borderRadius: BorderRadius.circular(99),
+            ),
+          ),
+          const SizedBox(height: 18),
           Text(
             title,
+            textAlign: center ? TextAlign.center : TextAlign.start,
             style: TextStyle(
               color: palette.brandDeep,
-              fontSize: 34,
+              fontSize: MediaQuery.sizeOf(context).width < 600 ? 31 : 46,
               fontWeight: FontWeight.w800,
               height: 1.15,
               letterSpacing: -.6,
@@ -76,12 +99,13 @@ class SectionHeading extends StatelessWidget {
           if (subtitle != null) ...[
             const SizedBox(height: 9),
             ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 650),
+              constraints: const BoxConstraints(maxWidth: 720),
               child: Text(
                 subtitle!,
+                textAlign: center ? TextAlign.center : TextAlign.start,
                 style: TextStyle(
                   color: palette.muted,
-                  fontSize: 16,
+                  fontSize: MediaQuery.sizeOf(context).width < 600 ? 15 : 17,
                   height: 1.65,
                 ),
               ),
@@ -106,13 +130,13 @@ class SiteCard extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: palette.surface,
-        border: Border.all(color: palette.line),
-        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: palette.line.withValues(alpha: .92)),
+        borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: palette.ink.withValues(alpha: .055),
-            blurRadius: 24,
-            offset: const Offset(0, 9),
+            color: palette.brandDeep.withValues(alpha: .085),
+            blurRadius: 40,
+            offset: const Offset(0, 18),
           ),
         ],
       ),
@@ -145,6 +169,7 @@ class GoldButton extends StatelessWidget {
       style: FilledButton.styleFrom(
         backgroundColor: palette.gold,
         foregroundColor: goldButtonText,
+        elevation: compact ? 0 : 2,
         textStyle: TextStyle(
           fontFamily: Theme.of(context).textTheme.labelLarge?.fontFamily,
           fontSize: compact ? 14 : 15,
@@ -156,7 +181,9 @@ class GoldButton extends StatelessWidget {
           vertical: compact ? 10 : 13,
         ),
         minimumSize: Size(0, compact ? 40 : 46),
-        shape: const StadiumBorder(),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(compact ? 999 : 16),
+        ),
       ),
     );
   }
@@ -173,17 +200,21 @@ class OutlineHeroButton extends StatelessWidget {
   final VoidCallback onPressed;
 
   @override
-  Widget build(BuildContext context) => OutlinedButton(
-    onPressed: onPressed,
-    style: OutlinedButton.styleFrom(
-      foregroundColor: Colors.white,
-      side: BorderSide(color: Colors.white.withValues(alpha: .85), width: 1.5),
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
-      minimumSize: const Size(0, 46),
-      shape: const StadiumBorder(),
-    ),
-    child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
-  );
+  Widget build(BuildContext context) {
+    final palette = SitePalette.of(context);
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: palette.brandDeep,
+        backgroundColor: palette.surface,
+        side: BorderSide(color: palette.line, width: 1.5),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 13),
+        minimumSize: const Size(0, 46),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+      child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700)),
+    );
+  }
 }
 
 class BulletList extends StatelessWidget {
@@ -236,14 +267,14 @@ class SoftPill extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 7),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .1),
-      border: Border.all(color: Colors.white.withValues(alpha: .2)),
+      color: SitePalette.of(context).surface,
+      border: Border.all(color: SitePalette.of(context).line),
       borderRadius: BorderRadius.circular(99),
     ),
     child: Text(
       label,
       style: TextStyle(
-        color: Colors.white,
+        color: SitePalette.of(context).brandDeep,
         fontSize: 12,
         fontWeight: FontWeight.w700,
       ),

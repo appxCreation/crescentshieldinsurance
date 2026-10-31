@@ -19,11 +19,24 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
+  String? _certificateIdFromUrl() {
+    final segments = Uri.base.pathSegments
+        .where((segment) => segment.isNotEmpty)
+        .toList();
+
+    // GitHub Pages serves this project beneath its repository-name path.
+    if (segments.isNotEmpty && segments.first == 'crescentshieldinsurance') {
+      segments.removeAt(0);
+    }
+
+    return segments.isEmpty ? null : segments.last;
+  }
+
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
       title: 'Crescent Shield Insurance',
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.light,
       theme: ThemeData(
         brightness: Brightness.light,
         scaffoldBackgroundColor: SitePalette.light.background,
@@ -32,7 +45,7 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.light,
           surface: SitePalette.light.surface,
         ),
-        textTheme: GoogleFonts.nunitoTextTheme(),
+        textTheme: GoogleFonts.manropeTextTheme(),
         useMaterial3: true,
       ),
       darkTheme: ThemeData(
@@ -43,11 +56,12 @@ class MyApp extends StatelessWidget {
           brightness: Brightness.dark,
           surface: SitePalette.dark.surface,
         ),
-        textTheme: GoogleFonts.nunitoTextTheme(ThemeData.dark().textTheme),
+        textTheme: GoogleFonts.manropeTextTheme(ThemeData.dark().textTheme),
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      home: const DashboardPage(),
+      initialRoute: '/',
+      home: DashboardPage(certificateId: _certificateIdFromUrl()),
     );
   }
 }

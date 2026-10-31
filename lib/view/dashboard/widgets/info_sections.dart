@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../constants/colors.dart';
 import 'site_components.dart';
@@ -33,48 +32,128 @@ class FaqSection extends StatelessWidget {
   ];
 
   @override
-  Widget build(BuildContext context) => SiteSection(
-    key: sectionKey,
-    alternate: true,
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const SectionHeading(title: 'Frequently asked questions'),
-        for (final qa in _questions)
-          Container(
-            margin: const EdgeInsets.only(bottom: 10),
-            decoration: BoxDecoration(
-              color: SitePalette.of(context).surface,
-              border: Border.all(color: SitePalette.of(context).line),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Theme(
-              data: Theme.of(
-                context,
-              ).copyWith(dividerColor: Colors.transparent),
-              child: ExpansionTile(
-                tilePadding: const EdgeInsets.symmetric(
-                  horizontal: 19,
-                  vertical: 2,
-                ),
-                childrenPadding: const EdgeInsets.fromLTRB(19, 0, 19, 16),
-                iconColor: SitePalette.of(context).brand,
-                collapsedIconColor: SitePalette.of(context).brand,
-                title: Text(
-                  qa.$1,
-                  style: TextStyle(
-                    color: SitePalette.of(context).brandDeep,
-                    fontWeight: FontWeight.w800,
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final palette = SitePalette.of(context);
+    final textTheme = Theme.of(context).textTheme;
+
+    return Container(
+      key: sectionKey,
+      width: double.infinity,
+      color: const Color(0xff06251c),
+      padding: EdgeInsets.symmetric(vertical: width <= 760 ? 56 : 82),
+      child: SiteContainer(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1040),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 54,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [palette.gold, palette.brand],
+                    ),
+                    borderRadius: BorderRadius.circular(99),
                   ),
                 ),
+                const SizedBox(height: 24),
+                Text(
+                  'Common questions',
+                  style: textTheme.headlineMedium?.copyWith(
+                    color: const Color(0xffe4f1ea),
+                    fontSize: width <= 760 ? 36 : 50,
+                    fontWeight: FontWeight.w800,
+                    height: 1.1,
+                    letterSpacing: -1.3,
+                  ),
+                ),
+                SizedBox(height: width <= 760 ? 34 : 52),
+                for (final question in _questions)
+                  SizedBox(
+                    width: double.infinity,
+                    child: _FaqAccordionItem(
+                      question: question.$1,
+                      answer: question.$2,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _FaqAccordionItem extends StatefulWidget {
+  const _FaqAccordionItem({required this.question, required this.answer});
+
+  final String question;
+  final String answer;
+
+  @override
+  State<_FaqAccordionItem> createState() => _FaqAccordionItemState();
+}
+
+class _FaqAccordionItemState extends State<_FaqAccordionItem> {
+  var _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final palette = SitePalette.of(context);
+    final textTheme = Theme.of(context).textTheme;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 220),
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xff0c2d24),
+        border: Border.all(
+          color: _expanded ? palette.brand : const Color(0xff1e4a3b),
+        ),
+        borderRadius: BorderRadius.circular(26),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            onTap: () => setState(() => _expanded = !_expanded),
+            borderRadius: BorderRadius.circular(26),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(24, 18, 20, _expanded ? 10 : 18),
+              child: Row(
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
+                  Expanded(
                     child: Text(
-                      qa.$2,
-                      style: TextStyle(
-                        color: SitePalette.of(context).muted,
-                        height: 1.55,
+                      widget.question,
+                      style: textTheme.titleMedium?.copyWith(
+                        color: const Color(0xffe4f1ea),
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: -.4,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: _expanded
+                          ? palette.gold
+                          : const Color(0xff06251c),
+                      shape: BoxShape.circle,
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 160),
+                      child: Icon(
+                        _expanded ? Icons.close_rounded : Icons.add_rounded,
+                        key: ValueKey(_expanded),
+                        color: _expanded ? goldButtonText : palette.brand,
+                        size: 21,
                       ),
                     ),
                   ),
@@ -82,100 +161,26 @@ class FaqSection extends StatelessWidget {
               ),
             ),
           ),
-      ],
-    ),
-  );
-}
-
-class ContactSection extends StatelessWidget {
-  const ContactSection({super.key, required this.sectionKey});
-
-  final Key sectionKey;
-
-  static const _contact = [
-    ('Phone / WhatsApp', '+92 308 6902148', Icons.call_outlined),
-    ('Email', 'info@crescentshield.com', Icons.email_outlined),
-    ('Office', 'Macdonald Bypass Sahiwal', Icons.location_on_outlined),
-  ];
-
-  Future<void> _openContact(int index) async {
-    final Uri? uri = switch (index) {
-      0 => Uri.parse('tel:+923086902148'),
-      1 => Uri.parse('mailto:info@crescentshield.com'),
-      _ => null,
-    };
-    if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final columns = MediaQuery.sizeOf(context).width > 700 ? 3 : 1;
-    return SiteSection(
-      key: sectionKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionHeading(
-            title: 'Contact us',
-            subtitle: 'We are here to help.',
-          ),
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _contact.length,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: columns,
-              crossAxisSpacing: 18,
-              mainAxisSpacing: 18,
-              mainAxisExtent: columns == 1 ? 115 : 145,
-            ),
-            itemBuilder: (context, index) => SiteCard(
-              padding: const EdgeInsets.all(20),
-              child: InkWell(
-                onTap: () => _openContact(index),
-                borderRadius: BorderRadius.circular(12),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 48,
-                      height: 48,
-                      decoration: BoxDecoration(
-                        color: SitePalette.of(
-                          context,
-                        ).brand.withValues(alpha: .1),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(
-                        _contact[index].$3,
-                        color: SitePalette.of(context).brand,
+          AnimatedSize(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeInOut,
+            alignment: Alignment.topCenter,
+            child: _expanded
+                ? Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 0, 72, 22),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        widget.answer,
+                        style: textTheme.bodyLarge?.copyWith(
+                          color: const Color(0xff9dbbab),
+                          fontSize: 17,
+                          height: 1.55,
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _contact[index].$1,
-                            style: TextStyle(
-                              color: SitePalette.of(context).brandDeep,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          Text(
-                            _contact[index].$2,
-                            style: TextStyle(
-                              color: SitePalette.of(context).muted,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+                  )
+                : const SizedBox.shrink(),
           ),
         ],
       ),
@@ -184,133 +189,39 @@ class ContactSection extends StatelessWidget {
 }
 
 class SiteFooter extends StatelessWidget {
-  const SiteFooter({super.key, required this.onNavigate});
-
-  final ValueChanged<String> onNavigate;
+  const SiteFooter({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final palette = SitePalette.of(context);
     final width = MediaQuery.sizeOf(context).width;
-    final brand = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Text(
-          'Crescent Shield Insurance',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        SizedBox(height: 8),
-        Text(
-          'Truck and trailer insurance with clear support.',
-          style: TextStyle(color: Color(0xffcfe3de)),
-        ),
-      ],
-    );
-    final quickLinks = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Quick links',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
-        ),
-        for (final item in const [
-          ('Services', 'services'),
-          ('Claims', 'claims'),
-          ('FAQ', 'faq'),
-        ])
-          TextButton(
-            onPressed: () => onNavigate(item.$2),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              foregroundColor: const Color(0xffcfe3de),
-              alignment: Alignment.centerLeft,
-            ),
-            child: Text(item.$1),
-          ),
-      ],
-    );
-    const contact = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Contact',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
-        ),
-        SizedBox(height: 9),
-        Text('+92 308 6902148', style: TextStyle(color: Color(0xffcfe3de))),
-        Text(
-          'info@crescentshield.com',
-          style: TextStyle(color: Color(0xffcfe3de)),
-        ),
-        Text(
-          'Macdonald Bypass Sahiwal',
-          style: TextStyle(color: Color(0xffcfe3de)),
-        ),
-      ],
-    );
-    const licence = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Licence',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
-        ),
-        SizedBox(height: 9),
-        Text(
-          'Insurer / SECP licence details: add here',
-          style: TextStyle(color: Color(0xffcfe3de)),
-        ),
-      ],
-    );
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [palette.heroStart, const Color(0xff06201c)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
+      decoration: const BoxDecoration(
+        color: Color(0xff061b15),
+        border: Border(top: BorderSide(color: Color(0xff164a36))),
       ),
-      padding: const EdgeInsets.symmetric(vertical: 43),
+      padding: const EdgeInsets.symmetric(vertical: 22),
       child: SiteContainer(
-        child: Column(
+        child: Row(
+          mainAxisAlignment: width <= 500
+              ? MainAxisAlignment.center
+              : MainAxisAlignment.start,
           children: [
-            if (width > 850)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 2, child: brand),
-                  Expanded(child: quickLinks),
-                  Expanded(flex: 2, child: contact),
-                  Expanded(child: licence),
-                ],
-              )
-            else
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  brand,
-                  const SizedBox(height: 22),
-                  quickLinks,
-                  const SizedBox(height: 12),
-                  contact,
-                  const SizedBox(height: 18),
-                  licence,
-                ],
-              ),
-            const SizedBox(height: 26),
-            Divider(color: Colors.white.withValues(alpha: .18)),
-            const SizedBox(height: 12),
-            Text(
-              '© 2026 Crescent Shield Insurance. Insurance products may only be offered by entities licensed by the SECP.',
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: .75),
-                fontSize: 12,
-                height: 1.55,
+            Image.asset(
+              'assets/logo/logoN.png',
+              width: width <= 500 ? 38 : 44,
+              height: width <= 500 ? 38 : 44,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(width: 12),
+            Flexible(
+              child: Text(
+                '© 2026 Crescent Shield Insurance. All rights reserved.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: const Color(0xff9dbbab),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ],
