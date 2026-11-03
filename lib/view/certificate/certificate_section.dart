@@ -68,7 +68,21 @@ class _CertificateSectionState extends State<CertificateSection> {
                   child: SizedBox(
                     height: 200,
                     child: Center(
-                      child: CircularProgressIndicator(color: palette.brand),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(color: palette.brand),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Loading certificate information, please wait…',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: palette.brandDeep,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );

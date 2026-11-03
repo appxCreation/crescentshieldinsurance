@@ -211,13 +211,22 @@ class _ReportVerificationPageState extends State<ReportVerificationPage> {
                                 ),
                               ),
                               child: _isSubmitting
-                                  ? const SizedBox(
-                                      width: 22,
-                                      height: 22,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2.5,
-                                        color: goldButtonText,
-                                      ),
+                                  ? const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        SizedBox(
+                                          width: 21,
+                                          height: 21,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2.5,
+                                            color: goldButtonText,
+                                          ),
+                                        ),
+                                        SizedBox(width: 10),
+                                        Text('Searching certificate…'),
+                                      ],
                                     )
                                   : const Text('Continue'),
                             ),

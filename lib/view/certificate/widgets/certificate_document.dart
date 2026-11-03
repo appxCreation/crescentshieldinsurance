@@ -166,12 +166,8 @@ class CertificateDocument extends StatelessWidget {
             _certificateTemplateUrl,
             fit: BoxFit.fill,
             filterQuality: FilterQuality.high,
-            loadingBuilder: (context, image, progress) {
-              if (progress != null) {
-                final expectedBytes = progress.expectedTotalBytes;
-                final progressValue = expectedBytes == null || expectedBytes <= 0
-                    ? null
-                    : progress.cumulativeBytesLoaded / expectedBytes;
+            frameBuilder: (context, image, frame, wasSynchronouslyLoaded) {
+              if (!wasSynchronouslyLoaded && frame == null) {
                 final palette = SitePalette.of(context);
 
                 return ColoredBox(
@@ -184,14 +180,13 @@ class CertificateDocument extends StatelessWidget {
                           width: 46,
                           height: 46,
                           child: CircularProgressIndicator(
-                            value: progressValue,
                             strokeWidth: 4,
                             color: palette.brandDeep,
                           ),
                         ),
                         const SizedBox(height: 14),
                         Text(
-                          'Loading certificate…',
+                          'Loading certificate image, please wait…',
                           style: TextStyle(
                             color: palette.brandDeep,
                             fontWeight: FontWeight.w800,
