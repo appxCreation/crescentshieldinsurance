@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../constants/colors.dart';
 
@@ -14,6 +15,8 @@ class CertificateDocument extends StatelessWidget {
 
   static const _imageWidth = 2382.0;
   static const _imageHeight = 3369.0;
+  static const _certificateTemplateUrl =
+      'https://xvthbqfvvjhndkvuyrgd.supabase.co/storage/v1/object/public/certificates/EcoShield%20Takaful%20Insurance%20Certificate.png';
   static const _months = [
     'JAN',
     'FEB',
@@ -96,17 +99,10 @@ class CertificateDocument extends StatelessWidget {
       '${value.day.toString().padLeft(2, '0')}-${_months[value.month - 1]}-${value.year}';
 
   String _certificateNumber() {
-    final provided = _rawValue([
-      'certificate_number',
-      'certificate_no',
-      'policy_number',
-    ]);
-    if (provided.isNotEmpty) return provided.toUpperCase();
-
     final id = _rawValue(['id']).replaceAll(RegExp(r'[^A-Za-z0-9]'), '');
-    final suffix = id.isEmpty
-        ? '00000001'
-        : id.substring(id.length > 8 ? id.length - 8 : 0).toUpperCase();
+    final shortId = id.isEmpty
+        ? '0001'
+        : id.substring(0, id.length > 4 ? 4 : id.length).toUpperCase();
     final issueDate = _dateFrom([
       'date_of_issue',
       'issued_at',
@@ -114,7 +110,16 @@ class CertificateDocument extends StatelessWidget {
       'period_from',
     ]);
     final year = (issueDate ?? DateTime.now()).year;
-    return 'CSI/TP/$year/$suffix';
+    return 'CSI/TP/$year/$shortId';
+  }
+
+  String? _certificateUrl() {
+    final id = _rawValue(['id']);
+    if (id.isEmpty) return null;
+    return Uri.https(
+      'appxcreation.github.io',
+      '/crescentshieldinsurance/$id',
+    ).toString();
   }
 
   String _make() {
@@ -157,155 +162,248 @@ class CertificateDocument extends StatelessWidget {
           final pageWidth = constraints.maxWidth;
           final pageHeight = constraints.maxHeight;
 
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                'assets/icons/certificate2.png',
-                fit: BoxFit.fill,
-                filterQuality: FilterQuality.high,
-              ),
+          return Image.network(
+            _certificateTemplateUrl,
+            fit: BoxFit.fill,
+            filterQuality: FilterQuality.high,
+            loadingBuilder: (context, image, progress) {
+              if (progress != null) {
+                final expectedBytes = progress.expectedTotalBytes;
+                final progressValue = expectedBytes == null || expectedBytes <= 0
+                    ? null
+                    : progress.cumulativeBytesLoaded / expectedBytes;
+                final palette = SitePalette.of(context);
 
-              // Certificate number and issue date in the two top cards.
-              _CertificateValue(
-                left: pageWidth * .082,
-                top: pageHeight * .282,
-                width: pageWidth * .205,
-                fontSize: pageWidth * .02,
-                value: _certificateNumber(),
-                color: SitePalette.light.brandDeep,
-              ),
-              _CertificateValue(
-                left: pageWidth * .311,
-                top: pageHeight * .282,
-                width: pageWidth * .17,
-                fontSize: pageWidth * .02,
-                value: _formatDate(
-                  _dateFrom(['date_of_issue', 'issued_at', 'created_at']) ??
-                      periodFrom,
-                ),
-                color: SitePalette.light.brandDeep,
-              ),
+                return ColoredBox(
+                  color: palette.background,
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          width: 46,
+                          height: 46,
+                          child: CircularProgressIndicator(
+                            value: progressValue,
+                            strokeWidth: 4,
+                            color: palette.brandDeep,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          'Loading certificate…',
+                          style: TextStyle(
+                            color: palette.brandDeep,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
 
-              // Insurance details: the template itself supplies each label.
-              _CertificateValue(
-                left: pageWidth * .245,
-                top: pageHeight * .357,
-                width: pageWidth * .68,
-                fontSize: pageWidth * .0138,
-                value: _value(['insured_name']),
-              ),
-              _CertificateValue(
-                left: pageWidth * .245,
-                top: pageHeight * .378,
-                width: pageWidth * .68,
-                fontSize: pageWidth * .0138,
-                value: _value(['city'], fallback: 'SAHIWAL'),
-              ),
-              _CertificateValue(
-                left: pageWidth * .245,
-                top: pageHeight * .399,
-                width: pageWidth * .68,
-                fontSize: pageWidth * .0138,
-                value: _value(
-                  ['address'],
-                  fallback: 'MACDONALD BYPASS SAHIWAL',
-                ),
-              ),
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  image,
 
-              // Insurance period values sit inside the green date panels.
-              _CertificateValue(
-                left: pageWidth * .118,
-                top: pageHeight * .456,
-                width: pageWidth * .183,
-                fontSize: pageWidth * .014,
-                value: _formatDate(periodFrom),
-                color: Colors.white,
-                align: TextAlign.center,
-              ),
-              _CertificateValue(
-                left: pageWidth * .351,
-                top: pageHeight * .456,
-                width: pageWidth * .183,
-                fontSize: pageWidth * .014,
-                value: _formatDate(periodTo),
-                color: Colors.white,
-                align: TextAlign.center,
-              ),
-              _CertificateValue(
-                left: pageWidth * .548,
-                top: pageHeight * .456,
-                width: pageWidth * .09,
-                fontSize: pageWidth * .011,
-                value: '($duration DAYS)',
-                color: SitePalette.light.brandDeep,
-                align: TextAlign.center,
-              ),
+                  if (_certificateUrl() case final certificateUrl?)
+                    Positioned(
+                      left: pageWidth * .565,
+                      top: pageHeight * .253,
+                      width: pageWidth * .069,
+                      height: pageWidth * .069,
+                      child: QrImageView(
+                        data: certificateUrl,
+                        version: QrVersions.auto,
+                        size: pageWidth * .069,
+                        padding: EdgeInsets.all(pageWidth * .0022),
+                        backgroundColor: Colors.white,
+                        gapless: false,
+                        semanticsLabel:
+                            'Scan to verify this insurance certificate',
+                      ),
+                    ),
 
-              // Vehicle details use the template's two-column label grid.
-              _CertificateValue(
-                left: pageWidth * .215,
-                top: pageHeight * .507,
-                width: pageWidth * .27,
-                fontSize: pageWidth * .0138,
-                value: _value(['registration_number']),
-              ),
-              _CertificateValue(
-                left: pageWidth * .215,
-                top: pageHeight * .529,
-                width: pageWidth * .27,
-                fontSize: pageWidth * .0138,
-                value: _modelAndYear(),
-              ),
-              _CertificateValue(
-                left: pageWidth * .215,
-                top: pageHeight * .551,
-                width: pageWidth * .27,
-                fontSize: pageWidth * .0138,
-                value: _make(),
-              ),
-              _CertificateValue(
-                left: pageWidth * .215,
-                top: pageHeight * .573,
-                width: pageWidth * .27,
-                fontSize: pageWidth * .0138,
-                value: _value(
-                  ['vehicle_category', 'vehicle_type'],
-                  fallback: 'TRUCK / TRAILER',
+                  // Certificate number and issue date in the two top cards.
+                  _CertificateValue(
+                    left: pageWidth * .082,
+                    top: pageHeight * .282,
+                    width: pageWidth * .205,
+                    fontSize: pageWidth * .02,
+                    value: _certificateNumber(),
+                    color: SitePalette.light.brandDeep,
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .311,
+                    top: pageHeight * .282,
+                    width: pageWidth * .17,
+                    fontSize: pageWidth * .02,
+                    value: _formatDate(
+                      _dateFrom(['date_of_issue', 'issued_at', 'created_at']) ??
+                          periodFrom,
+                    ),
+                    color: SitePalette.light.brandDeep,
+                  ),
+
+                  // Insurance details: the template itself supplies each label.
+                  _CertificateValue(
+                    left: pageWidth * .245,
+                    top: pageHeight * .357,
+                    width: pageWidth * .68,
+                    fontSize: pageWidth * .0138,
+                    value: _value(['insured_name']),
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .245,
+                    top: pageHeight * .378,
+                    width: pageWidth * .68,
+                    fontSize: pageWidth * .0138,
+                    value: _value(['city'], fallback: 'SAHIWAL'),
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .245,
+                    top: pageHeight * .399,
+                    width: pageWidth * .68,
+                    fontSize: pageWidth * .0138,
+                    value: _value(
+                      ['address'],
+                      fallback: 'MACDONALD BYPASS SAHIWAL',
+                    ),
+                  ),
+
+                  // Insurance period values sit inside the green date panels.
+                  _CertificateValue(
+                    left: pageWidth * .118,
+                    top: pageHeight * .456,
+                    width: pageWidth * .183,
+                    fontSize: pageWidth * .014,
+                    value: _formatDate(periodFrom),
+                    color: Colors.white,
+                    align: TextAlign.center,
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .351,
+                    top: pageHeight * .456,
+                    width: pageWidth * .183,
+                    fontSize: pageWidth * .014,
+                    value: _formatDate(periodTo),
+                    color: Colors.white,
+                    align: TextAlign.center,
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .548,
+                    top: pageHeight * .456,
+                    width: pageWidth * .09,
+                    fontSize: pageWidth * .011,
+                    value: '($duration DAYS)',
+                    color: SitePalette.light.brandDeep,
+                    align: TextAlign.center,
+                  ),
+
+                  // Vehicle details use the template's two-column label grid.
+                  _CertificateValue(
+                    left: pageWidth * .215,
+                    top: pageHeight * .507,
+                    width: pageWidth * .27,
+                    fontSize: pageWidth * .0138,
+                    value: _value(['registration_number']),
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .215,
+                    top: pageHeight * .529,
+                    width: pageWidth * .27,
+                    fontSize: pageWidth * .0138,
+                    value: _modelAndYear(),
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .215,
+                    top: pageHeight * .551,
+                    width: pageWidth * .27,
+                    fontSize: pageWidth * .0138,
+                    value: _make(),
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .215,
+                    top: pageHeight * .573,
+                    width: pageWidth * .27,
+                    fontSize: pageWidth * .0138,
+                    value: _value(
+                      ['vehicle_category', 'vehicle_type'],
+                      fallback: 'TRUCK / TRAILER',
+                    ),
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .674,
+                    top: pageHeight * .507,
+                    width: pageWidth * .25,
+                    fontSize: pageWidth * .0138,
+                    value: _value(['engine_number']),
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .674,
+                    top: pageHeight * .529,
+                    width: pageWidth * .25,
+                    fontSize: pageWidth * .0138,
+                    value: _value(['chassis_number']),
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .674,
+                    top: pageHeight * .551,
+                    width: pageWidth * .25,
+                    fontSize: pageWidth * .0138,
+                    value: _value(['seat_capacity', 'seating_capacity']),
+                  ),
+                  _CertificateValue(
+                    left: pageWidth * .674,
+                    top: pageHeight * .573,
+                    width: pageWidth * .25,
+                    fontSize: pageWidth * .0138,
+                    value: _value(
+                      ['insurance_package', 'package'],
+                      fallback: 'THIRD PARTY LIABILITY',
+                    ),
+                  ),
+                ],
+              );
+            },
+            errorBuilder: (context, error, stackTrace) {
+              final palette = SitePalette.of(context);
+              return ColoredBox(
+                color: palette.background,
+                child: Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.broken_image_outlined,
+                          size: 42,
+                          color: palette.brandDeep,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Certificate image could not be loaded.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: palette.brandDeep,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Check your connection and refresh to try again.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(color: palette.muted),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              _CertificateValue(
-                left: pageWidth * .674,
-                top: pageHeight * .507,
-                width: pageWidth * .25,
-                fontSize: pageWidth * .0138,
-                value: _value(['engine_number']),
-              ),
-              _CertificateValue(
-                left: pageWidth * .674,
-                top: pageHeight * .529,
-                width: pageWidth * .25,
-                fontSize: pageWidth * .0138,
-                value: _value(['chassis_number']),
-              ),
-              _CertificateValue(
-                left: pageWidth * .674,
-                top: pageHeight * .551,
-                width: pageWidth * .25,
-                fontSize: pageWidth * .0138,
-                value: _value(['seat_capacity', 'seating_capacity']),
-              ),
-              _CertificateValue(
-                left: pageWidth * .674,
-                top: pageHeight * .573,
-                width: pageWidth * .25,
-                fontSize: pageWidth * .0138,
-                value: _value(
-                  ['insurance_package', 'package'],
-                  fallback: 'THIRD PARTY LIABILITY',
-                ),
-              ),
-            ],
+              );
+            },
           );
         },
       ),

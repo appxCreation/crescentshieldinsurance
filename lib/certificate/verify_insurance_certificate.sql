@@ -1,4 +1,5 @@
--- Allow public verification only when both vehicle identifiers match.
+-- Allow public verification with either vehicle identifier. If both are
+-- supplied, both must match. This does not grant anonymous SELECT access.
 -- The function returns only the values displayed on the certificate and does
 -- not grant anonymous SELECT access to insurance_certificates.
 create or replace function public.verify_insurance_certificate(
@@ -50,8 +51,18 @@ as $$
     )
   )
   from public.insurance_certificates as c
-  where upper(btrim(c.registration_number)) = upper(btrim(p_registration_number))
-    and upper(btrim(c.chassis_number)) = upper(btrim(p_chassis_number))
+  where (
+      nullif(btrim(p_registration_number), '') is not null
+      or nullif(btrim(p_chassis_number), '') is not null
+    )
+    and (
+      nullif(btrim(p_registration_number), '') is null
+      or upper(btrim(c.registration_number)) = upper(btrim(p_registration_number))
+    )
+    and (
+      nullif(btrim(p_chassis_number), '') is null
+      or upper(btrim(c.chassis_number)) = upper(btrim(p_chassis_number))
+    )
   limit 1;
 $$;
 

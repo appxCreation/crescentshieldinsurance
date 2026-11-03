@@ -28,6 +28,12 @@ class _ReportVerificationPageState extends State<ReportVerificationPage> {
 
   Future<void> _verifyCertificate() async {
     FocusScope.of(context).unfocus();
+    final registrationNumber = _registrationController.text.trim();
+    final chassisNumber = _chassisController.text.trim();
+    if (registrationNumber.isEmpty && chassisNumber.isEmpty) {
+      _formKey.currentState!.validate();
+      return;
+    }
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -39,8 +45,8 @@ class _ReportVerificationPageState extends State<ReportVerificationPage> {
       final response = await Supabase.instance.client.rpc(
         'verify_insurance_certificate',
         params: {
-          'p_registration_number': _registrationController.text.trim(),
-          'p_chassis_number': _chassisController.text.trim(),
+          'p_registration_number': registrationNumber,
+          'p_chassis_number': chassisNumber,
         },
       );
 
@@ -55,7 +61,7 @@ class _ReportVerificationPageState extends State<ReportVerificationPage> {
       if (certificate == null || certificate['id'] == null) {
         setState(() {
           _errorMessage =
-              'We could not find a certificate matching both numbers. Check them and try again.';
+              'We could not find a certificate for the number you entered. Check it and try again.';
           _isSubmitting = false;
         });
         return;
@@ -66,8 +72,10 @@ class _ReportVerificationPageState extends State<ReportVerificationPage> {
         MaterialPageRoute<void>(
           builder: (_) => VerifiedCertificatePage(
             certificate: certificate!,
-            registrationNumber: _registrationController.text.trim(),
-            chassisNumber: _chassisController.text.trim(),
+            registrationNumber: certificate!['registration_number']?.toString() ??
+                registrationNumber,
+            chassisNumber: certificate!['chassis_number']?.toString() ??
+                chassisNumber,
           ),
         ),
       );
@@ -147,12 +155,18 @@ class _ReportVerificationPageState extends State<ReportVerificationPage> {
                             controller: _registrationController,
                             label: 'Registration number',
                             hint: 'Enter registration number',
+                            validator: (_) =>
+                                _registrationController.text.trim().isEmpty &&
+                                    _chassisController.text.trim().isEmpty
+                                ? 'Enter a registration or chassis number.'
+                                : null,
                           ),
                           const SizedBox(height: 20),
                           _VerificationField(
                             controller: _chassisController,
                             label: 'Chassis number',
                             hint: 'Enter chassis number',
+                            validator: (_) => null,
                           ),
                           if (_errorMessage != null) ...[
                             const SizedBox(height: 20),
@@ -228,12 +242,14 @@ class _VerificationField extends StatelessWidget {
     required this.label,
     required this.hint,
     this.readOnly = false,
+    this.validator,
   });
 
   final TextEditingController controller;
   final String label;
   final String hint;
   final bool readOnly;
+  final String? Function(String?)? validator;
 
   @override
   Widget build(BuildContext context) {
@@ -275,9 +291,7 @@ class _VerificationField extends StatelessWidget {
           borderSide: BorderSide(color: palette.brand, width: 1.7),
         ),
       ),
-      validator: (value) => value == null || value.trim().isEmpty
-          ? 'Please enter your ${label.toLowerCase()}.'
-          : null,
+      validator: validator,
     );
   }
 }
